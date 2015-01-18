@@ -4,7 +4,7 @@ open Microsoft.FSharp.Collections
 open System.Collections.Generic;
  
 type Move= {
-   d:JoeChakra.BrainVita.Direction
+   d:int
    x:int
    y:int
 }
@@ -13,42 +13,43 @@ let moves = new System.Collections.Generic.List<Move> ()
 //let mutable dir=North
 let mutable count=32
 let mutable found=true
-let dirs = [
-    JoeChakra.BrainVita.Direction.East;
-    JoeChakra.BrainVita.Direction.South;
-    JoeChakra.BrainVita.Direction.West;
-    JoeChakra.BrainVita.Direction.North]
+
  
 let mutable totalMoves = 0;
-let printMove X =  printfn "%d,%d %A" X.x X.y X.d
+let printMove X =  printfn "%d,%d %A" X.x X.y JoeChakra.BrainVita.dirs.[X.d]
  
-let rec BVMove i0 j0 d0 =
-    let (found,d,i,j) = JoeChakra.BrainVita.findMove d0 i0 j0
-    if found then
-        JoeChakra.BrainVita.move dirs.[d] i j |> ignore
+let rec BVMove mov0 =
+    let mov = JoeChakra.BrainVita.findNextMove mov0
+    if mov = JoeChakra.BrainVita.invalid then
+        false
+    else
+        JoeChakra.BrainVita.move mov |> ignore
         totalMoves<-totalMoves+1
         count<-count-1
-        let move = {d=dirs.[d]; x=i; y=j}
+        let (i,j,d) = mov
+        let move:Move = {d=d;  x=i; y=j}
         moves.Add(move)
-        if count=1 then
-            moves |> Seq.iter printMove |>ignore
-            printfn ";--------total moves %d----------" totalMoves
-            true
-        else if BVMove 0 0 0 then
+        if Solve 0 then
             true
         else
-            JoeChakra.BrainVita.reverse dirs.[d] i j |> ignore
+            JoeChakra.BrainVita.reverse mov |> ignore
             moves.RemoveAt(moves.Count-1)
             count<-count+1
-            let (k,l,m) = JoeChakra.BrainVita.incr i j d
-            BVMove k l m
+            let mov1 = JoeChakra.BrainVita.incr mov
+            BVMove mov1
+and Solve  k =
+    if count=1 then
+        moves |> Seq.iter printMove |>ignore
+        printfn ";--------total moves %d----------" totalMoves
+        true
     else
-        false
+        BVMove JoeChakra.BrainVita.zeroMove
+
  
 
 // See the 'F# Tutorial' project for more help.
 
 [<EntryPoint>]
 let main argv = 
-    BVMove 0 0 0  |> ignore// Learn more about F# at http://fsharp.net
+    Solve 0 |> ignore// Learn more about F# at http://fsharp.net
     0 // return an integer exit code

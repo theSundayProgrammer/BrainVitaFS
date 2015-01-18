@@ -1,4 +1,5 @@
-﻿module JoeChakra.BrainVita
+﻿// Mdel
+module JoeChakra.BrainVita
 open Microsoft.FSharp.Math
 open Microsoft.FSharp.Collections
 open System.Collections.Generic;
@@ -47,9 +48,12 @@ let isMovable d x y =
             | North -> (IsValid x (y-2))  && (movableY -1 x y)
     else
     false
+
+let dirs = [East;South;West;North]
  
-let move d x y =
-    match d with
+let move mov =
+    let (x,y,d) = mov
+    match dirs.[d] with
         | East ->  (moveX 1 x y)
         | West ->  (moveX -1 x y)
         | South -> (moveY 1 x y)
@@ -73,30 +77,42 @@ let reverseY i x y =
     board.[x,y+2*i] <- false
     true
      
-let reverse d x y =
-    match d with
+let reverse mov =
+    let (x,y,d) = mov
+    match dirs.[d] with
         | East -> reverseX 1 x y
         | West -> reverseX -1 x y
         | South -> reverseY 1 x y
         | North -> reverseY -1 x y
          
-let dirs = [East;South;West;North]
+
+let invalid = (-1, -1, -1)
+let zeroMove = 0,0,0
  
-let incr i j d =
+let incr mov =
+    let (i,j,d) = mov
     if d<3 then
         i, j, (d+1)
     else if i<6 then
         (i+1), j, 0
-    else
+    else if j<7 then
         0, (j+1), 0
-         
-let rec findMove d i j =
-    if j<7 then
-        let found = isMovable (dirs.[d]) i j
-        if found then
-            true,d,i,j
-        else
-            let (i0,j0,d0) = incr i j d
-            findMove d0 i0 j0
     else
-        false,d,i,j
+        invalid
+
+
+
+let rec findNextMove mov =
+    if mov = invalid then
+        mov
+    else
+        let (i,j,d) = mov
+        if isMovable (dirs.[d]) i j then
+            mov
+        else
+             findNextMove (incr mov)
+
+
+let findFirstMove =
+    findNextMove zeroMove
+
